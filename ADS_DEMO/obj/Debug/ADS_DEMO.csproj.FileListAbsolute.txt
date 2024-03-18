@@ -1,0 +1,12 @@
+D:\Projects\ADS_DEMO\bin\Debug\ADS_DEMO.exe.config
+D:\Projects\ADS_DEMO\bin\Debug\ADS_DEMO.exe
+D:\Projects\ADS_DEMO\bin\Debug\ADS_DEMO.pdb
+D:\Projects\ADS_DEMO\bin\Debug\Newtonsoft.Json.dll
+D:\Projects\ADS_DEMO\bin\Debug\TwinCAT.Ads.dll
+D:\Projects\ADS_DEMO\bin\Debug\Newtonsoft.Json.xml
+D:\Projects\ADS_DEMO\bin\Debug\TwinCAT.Ads.xml
+D:\Projects\ADS_DEMO\obj\Debug\ADS_DEMO.csproj.AssemblyReference.cache
+D:\Projects\ADS_DEMO\obj\Debug\ADS_DEMO.csproj.CoreCompileInputs.cache
+D:\Projects\ADS_DEMO\obj\Debug\ADS_DEMO.csproj.CopyComplete
+D:\Projects\ADS_DEMO\obj\Debug\ADS_DEMO.exe
+D:\Projects\ADS_DEMO\obj\Debug\ADS_DEMO.pdb
