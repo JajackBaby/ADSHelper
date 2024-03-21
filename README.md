@@ -1,6 +1,16 @@
 # ADSHelper
-Beckhoff TwinCAT ADS ADSHelper for C#.Implement single variable read and write, multi variable read and write, output object, Json, JsonString and other formats for ADS protocol in one line of code
+- Beckhoff 
+- TwinCAT 
+- ADS 
+## ADSHelper brief introduction
+ADSHelper is a ADS protocol implement for C#.  
+It has the following characteristics:
+- single variable read and write
+- multi variable read and write
+- output formats for object, Json, JsonString , etc
+- line code
 
+## Code Example
             //开始
             ADSHelper ads = new ADSHelper();
             if (ads.CreateADSConnect("IP", 851))
