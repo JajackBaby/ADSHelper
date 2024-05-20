@@ -604,6 +604,13 @@ namespace ADS_DEMO
             },
             new AdsDataTypeDescription
             {
+                Names = new List<string> { "UINT64" },
+                AdsDataType = AdsDatatypeId.ADST_BIGTYPE,
+                Size = 1, // 默认大小  
+                FromBuffer = buffer => DecodeUINT64(buffer)
+            },
+            new AdsDataTypeDescription
+            {
                 Names = new List<string> { "LINT", "INT64"},
                 AdsDataType = AdsDatatypeId.ADST_INT64,
                 Size = 1, // 默认大小  
