@@ -349,7 +349,7 @@ namespace ADS_DEMO
         }
         private object ParsePlcVariableToJs(byte[] dataBuffer, AdsDataTypeId dataTypeId)
         {
-            return Types.types.Find(t => { return t.AdsDataType.Equals(dataTypeId); }).FromBuffer(dataBuffer);
+            return Types.types.Find(t => { return t.AdsDataType.Equals(dataTypeId) && t.Size == dataBuffer.Length; }).FromBuffer(dataBuffer);
         }
         private object ParsePlcDataToJson(byte[] dataBuffer, DataType datatype)
         {
@@ -558,70 +558,77 @@ namespace ADS_DEMO
             {
                 Names = new List<string> { "UINT", "WORD", "BITARR16", "UINT16"},
                 AdsDataType = AdsDataTypeId.ADST_UINT16,
-                Size = 1, // 默认大小  
+                Size = 2, // 默认大小  
                 FromBuffer = buffer => DecodeUINT16(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "DINT", "INT32"},
                 AdsDataType = AdsDataTypeId.ADST_INT32,
-                Size = 1, // 默认大小  
+                Size = 4, // 默认大小  
                 FromBuffer = buffer => DecodeINT32(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> {"UDINT", "DWORD", "TIME", "TIME_OF_DAY", "TOD", "BITARR32", "UINT32" },
                 AdsDataType = AdsDataTypeId.ADST_UINT32,
-                Size = 1, // 默认大小  
+                Size = 4, // 默认大小  
                 FromBuffer = buffer => DecodeUINT32(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> {"DATE_AND_TIME", "DT", "DATE" },
                 AdsDataType = AdsDataTypeId.ADST_UINT32,
-                Size = 1, // 默认大小  
+                Size = 4, // 默认大小  
                 FromBuffer = buffer => DecodeUINT32(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> {"LREAL", "DOUBLE" },
                 AdsDataType = AdsDataTypeId.ADST_REAL64,
-                Size = 1, // 默认大小  
+                Size = 8, // 默认大小  
                 FromBuffer = buffer => DecodeREAL64(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "REAL", "FLOAT"},
                 AdsDataType = AdsDataTypeId.ADST_REAL32,
-                Size = 1, // 默认大小  
+                Size = 4, // 默认大小  
                 FromBuffer = buffer => DecodeREAL32(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> {"LWORD", "ULINT", "LTIME", "UINT64" },
                 AdsDataType = AdsDataTypeId.ADST_UINT64,
-                Size = 1, // 默认大小  
+                Size = 8, // 默认大小  
                 FromBuffer = buffer => DecodeUINT64(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "UINT64" },
                 AdsDataType = AdsDataTypeId.ADST_BIGTYPE,
-                Size = 1, // 默认大小  
+                Size = 8, // 默认大小  
                 FromBuffer = buffer => DecodeUINT64(buffer)
+            },
+            new AdsDataTypeDescription
+            {
+                Names = new List<string> { "UINT32" },
+                AdsDataType = AdsDataTypeId.ADST_BIGTYPE,
+                Size = 4, // 默认大小  
+                FromBuffer = buffer => DecodeUINT32(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "LINT", "INT64"},
                 AdsDataType = AdsDataTypeId.ADST_INT64,
-                Size = 1, // 默认大小  
+                Size = 8, // 默认大小  
                 FromBuffer = buffer => DecodeINT64(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "INT", "INT16"},
                 AdsDataType = AdsDataTypeId.ADST_INT16,
-                Size = 1, // 默认大小  
+                Size = 2, // 默认大小  
                 FromBuffer = buffer => DecodeINT16(buffer)
             },
         };
