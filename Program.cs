@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TcAdsHelper;
 
 namespace ADS_DEMO
 {
@@ -10,7 +11,7 @@ namespace ADS_DEMO
     {
         static void Main(string[] args)
         {
-            ADSHelper ads = new ADSHelper();
+            AdsHelper ads = new AdsHelper();
             if (ads.CreateADSConnect("IP", 851))
             {
                 //多变量读取 

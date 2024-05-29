@@ -10,20 +10,21 @@ using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 using System.Collections;
 using System.Threading.Tasks;
+using TwinCAT;
 
-namespace ADS_DEMO
+namespace TcAdsHelper
 {
-    public class ADSHelper : IDisposable
+    public class AdsHelper : IDisposable
     {
         #region 属性字段声明
         /// <summary>
         /// TcAdsClient
         /// </summary>
-        private TcAdsClient tcClient;
+        private AdsClient tcClient;
         /// <summary>
         /// allSymbols
         /// </summary>
-        private ReadOnlySymbolCollection allSymbols;
+        private ISymbolCollection<ISymbol> allSymbols;
         /// <summary>
         /// allDataTypes
         /// </summary>
@@ -90,7 +91,7 @@ namespace ADS_DEMO
         public bool CreateADSConnect(string plcIP, int plcPort)
         {
             //ADS Client初始化
-            tcClient = new TcAdsClient();
+            tcClient = new AdsClient();
             tcClient.Connect(plcIP, plcPort);
             PlcIP = plcIP;
             PlcPort = plcPort;
@@ -328,11 +329,11 @@ namespace ADS_DEMO
                         //4.返回
                         if (type == null)
                             return null;
-                        if (type.AdsDataType == AdsDatatypeId.ADST_STRING)
+                        if (type.AdsDataType == AdsDataTypeId.ADST_STRING)
                         {
                             type.Size = match[0].Groups[3] != null ? (int.Parse(match[0].Groups[3].Value) + 1) : type.Size;
                         }
-                        else if (type.AdsDataType == AdsDatatypeId.ADST_WSTRING)
+                        else if (type.AdsDataType == AdsDataTypeId.ADST_WSTRING)
                         {
                             type.Size = match[0].Groups[3] != null ? (int.Parse(match[0].Groups[3].Value) * 2 + 2) : type.Size;
                         }
@@ -346,9 +347,9 @@ namespace ADS_DEMO
                 return type.FromBuffer(dataBuffer);
             }
         }
-        private object ParsePlcVariableToJs(byte[] dataBuffer, AdsDatatypeId dataTypeId)
+        private object ParsePlcVariableToJs(byte[] dataBuffer, AdsDataTypeId dataTypeId)
         {
-            return Types.types.Find(t => { return t.AdsDataType.Equals(dataTypeId); }).FromBuffer(dataBuffer);
+            return Types.types.Find(t => { return t.AdsDataType.Equals(dataTypeId) && t.Size == dataBuffer.Length; }).FromBuffer(dataBuffer);
         }
         private object ParsePlcDataToJson(byte[] dataBuffer, DataType datatype)
         {
@@ -472,11 +473,10 @@ namespace ADS_DEMO
             else
             {
                 //adstypes
-                return (dataType.DataTypeId == AdsDatatypeId.ADST_STRING || dataType.DataTypeId == AdsDatatypeId.ADST_WSTRING) ? "\"" + ParsePlcVariableToJs(dataBuffer, dataType.DataTypeId) + "\"" : ParsePlcVariableToJs(dataBuffer, dataType.DataTypeId);
+                return (dataType.DataTypeId == AdsDataTypeId.ADST_STRING || dataType.DataTypeId == AdsDataTypeId.ADST_WSTRING) ? "\"" + ParsePlcVariableToJs(dataBuffer, dataType.DataTypeId) + "\"" : ParsePlcVariableToJs(dataBuffer, dataType.DataTypeId);
             }
         }
         #endregion
-
 
         #region 资源释放
 
@@ -497,237 +497,12 @@ namespace ADS_DEMO
                 disposed = true;
             }
         }
-        ~ADSHelper()
+        ~AdsHelper()
         {
             Dispose(disposing: false);
         } 
         #endregion
 
     }
-    #region ADSType
-
-    public class AdsDataTypeDescription
-    {
-        public List<string> Names { get; set; }
-        public AdsDatatypeId AdsDataType { get; set; }
-        public int Size { get; set; }
-        public Func<byte[], object> FromBuffer { get; set; }
-    }
-
-    public class Types
-    {
-        public static List<AdsDataTypeDescription> types = new List<AdsDataTypeDescription>
-        {
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> { "WSTRING" },
-                AdsDataType = AdsDatatypeId.ADST_WSTRING,
-                Size = 162, // 默认大小  
-                FromBuffer = buffer => DecodeWString(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> { "STRING" },
-                AdsDataType = AdsDatatypeId.ADST_STRING,
-                Size = 81, // 默认大小  
-                FromBuffer = buffer => DecodeString(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> { "BOOL", "BIT", "BIT8" },
-                AdsDataType = AdsDatatypeId.ADST_BIT,
-                Size = 1, // 默认大小  
-                FromBuffer = buffer => DecodeBIT(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> { "BYTE", "USINT", "BITARR8", "UINT8"},
-                AdsDataType = AdsDatatypeId.ADST_UINT8,
-                Size = 1, // 默认大小  
-                FromBuffer = buffer => DecodeUINT8(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> {"SINT", "INT8" },
-                AdsDataType = AdsDatatypeId.ADST_INT8,
-                Size = 1, // 默认大小  
-                FromBuffer = buffer => DecodeINT8(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> { "UINT", "WORD", "BITARR16", "UINT16"},
-                AdsDataType = AdsDatatypeId.ADST_UINT16,
-                Size = 1, // 默认大小  
-                FromBuffer = buffer => DecodeUINT16(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> { "DINT", "INT32"},
-                AdsDataType = AdsDatatypeId.ADST_INT32,
-                Size = 1, // 默认大小  
-                FromBuffer = buffer => DecodeINT32(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> {"UDINT", "DWORD", "TIME", "TIME_OF_DAY", "TOD", "BITARR32", "UINT32" },
-                AdsDataType = AdsDatatypeId.ADST_UINT32,
-                Size = 1, // 默认大小  
-                FromBuffer = buffer => DecodeUINT32(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> {"DATE_AND_TIME", "DT", "DATE" },
-                AdsDataType = AdsDatatypeId.ADST_UINT32,
-                Size = 1, // 默认大小  
-                FromBuffer = buffer => DecodeUINT32(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> {"LREAL", "DOUBLE" },
-                AdsDataType = AdsDatatypeId.ADST_REAL64,
-                Size = 1, // 默认大小  
-                FromBuffer = buffer => DecodeREAL64(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> { "REAL", "FLOAT"},
-                AdsDataType = AdsDatatypeId.ADST_REAL32,
-                Size = 1, // 默认大小  
-                FromBuffer = buffer => DecodeREAL32(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> {"LWORD", "ULINT", "LTIME", "UINT64" },
-                AdsDataType = AdsDatatypeId.ADST_UINT64,
-                Size = 1, // 默认大小  
-                FromBuffer = buffer => DecodeUINT64(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> { "LINT", "INT64"},
-                AdsDataType = AdsDatatypeId.ADST_INT64,
-                Size = 1, // 默认大小  
-                FromBuffer = buffer => DecodeINT64(buffer)
-            },
-            new AdsDataTypeDescription
-            {
-                Names = new List<string> { "INT", "INT16"},
-                AdsDataType = AdsDatatypeId.ADST_INT16,
-                Size = 1, // 默认大小  
-                FromBuffer = buffer => DecodeINT16(buffer)
-            },
-        };
-
-        // 这里可以添加代码来使用上述定义的types列表，例如编码和解码值等。  
-        private static string DecodeString(byte[] buffer)
-        {
-            // 假设我们使用Unicode编码从字节数组解码字符串  
-            return buffer == null ? "" : Encoding.ASCII.GetString(buffer).TrimEnd('\0');
-        }
-        private static string DecodeWString(byte[] buffer)
-        {
-            // 假设我们使用Unicode编码从字节数组解码字符串  
-            try
-            {
-                int al = buffer.Count();
-                if (al <= 0)
-                {
-                    return null;
-                }
-                string s;
-                byte[] Buffer = new byte[al];
-                Array.Copy(buffer, 0, Buffer, 0, al);
-                string ss = Encoding.Unicode.GetString(Buffer);
-                s = cutSubstring(ss, ss.Length);
-                return s;
-            }
-            catch { return null; }
-        }
-        private static string DecodeBIT(byte[] buffer)
-        {
-            return BitConverter.ToBoolean(buffer, 0).ToString().ToLower();
-        }
-        private static byte DecodeUINT8(byte[] buffer)
-        {
-            return buffer[0];
-        }
-        private static sbyte DecodeINT8(byte[] buffer)
-        {
-            return (sbyte)buffer[0];
-        }
-        private static ushort DecodeUINT16(byte[] buffer)
-        {
-            return BitConverter.ToUInt16(buffer, 0);
-        }
-        private static short DecodeINT16(byte[] buffer)
-        {
-            return BitConverter.ToInt16(buffer, 0);
-        }
-        private static int DecodeINT32(byte[] buffer)
-        {
-            return BitConverter.ToInt32(buffer, 0);
-        }
-        private static uint DecodeUINT32(byte[] buffer)
-        {
-            return BitConverter.ToUInt32(buffer, 0);
-        }
-        private static float DecodeREAL32(byte[] buffer)
-        {
-            return BitConverter.ToSingle(buffer, 0);
-        }
-        private static double DecodeREAL64(byte[] buffer)
-        {
-            return BitConverter.ToDouble(buffer, 0);
-        }
-        private static ulong DecodeUINT64(byte[] buffer)
-        {
-            return BitConverter.ToUInt64(buffer, 0);
-        }
-        private static long DecodeINT64(byte[] buffer)
-        {
-            return BitConverter.ToInt64(buffer, 0);
-        }
-        private static string cutSubstring(string str, int length)
-        {
-            if (str == null || str.Length == 0 || length < 0)
-            {
-                return "";
-            }
-
-            byte[] bytes = Encoding.Unicode.GetBytes(str);
-            int n = 0;  //  表示当前的字节数
-            int i = 0;  //  要截取的字节数
-            for (; i < bytes.GetLength(0) && n < length; i++)
-            {
-                //  偶数位置，如0、2、4等，为UCS2编码中两个字节的第一个字节
-                if (i % 2 == 0)
-                {
-                    if ((bytes[i] == 0 && bytes[i + 1] == 0))
-                        break;
-                    n++;      //  在UCS2第一个字节时n加1
-                }
-                else
-                {
-                    //  当UCS2编码的第二个字节大于0时，该UCS2字符为汉字，一个汉字算两个字节
-                    if (bytes[i] > 0)
-                    {
-                        n++;
-                    }
-                }
-            }
-            //  如果i为奇数时，处理成偶数
-            if (i % 2 == 1)
-            {
-                //  该UCS2字符是汉字时，去掉这个截一半的汉字
-                if (bytes[i] > 0)
-                    i = i - 1;
-                //  该UCS2字符是字母或数字，则保留该字符
-                else
-                    i = i + 1;
-            }
-            return Encoding.Unicode.GetString(bytes, 0, i);
-        }
-    }
-    #endregion
 }
 
