@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 using System.Collections;
 using System.Threading.Tasks;
+using TwinCAT;
 
 namespace ADS_DEMO
 {
@@ -19,11 +20,11 @@ namespace ADS_DEMO
         /// <summary>
         /// TcAdsClient
         /// </summary>
-        private TcAdsClient tcClient;
+        private AdsClient tcClient;
         /// <summary>
         /// allSymbols
         /// </summary>
-        private ReadOnlySymbolCollection allSymbols;
+        private ISymbolCollection<ISymbol> allSymbols;
         /// <summary>
         /// allDataTypes
         /// </summary>
@@ -90,7 +91,7 @@ namespace ADS_DEMO
         public bool CreateADSConnect(string plcIP, int plcPort)
         {
             //ADS Client初始化
-            tcClient = new TcAdsClient();
+            tcClient = new AdsClient();
             tcClient.Connect(plcIP, plcPort);
             PlcIP = plcIP;
             PlcPort = plcPort;
@@ -328,11 +329,11 @@ namespace ADS_DEMO
                         //4.返回
                         if (type == null)
                             return null;
-                        if (type.AdsDataType == AdsDatatypeId.ADST_STRING)
+                        if (type.AdsDataType == AdsDataTypeId.ADST_STRING)
                         {
                             type.Size = match[0].Groups[3] != null ? (int.Parse(match[0].Groups[3].Value) + 1) : type.Size;
                         }
-                        else if (type.AdsDataType == AdsDatatypeId.ADST_WSTRING)
+                        else if (type.AdsDataType == AdsDataTypeId.ADST_WSTRING)
                         {
                             type.Size = match[0].Groups[3] != null ? (int.Parse(match[0].Groups[3].Value) * 2 + 2) : type.Size;
                         }
@@ -346,7 +347,7 @@ namespace ADS_DEMO
                 return type.FromBuffer(dataBuffer);
             }
         }
-        private object ParsePlcVariableToJs(byte[] dataBuffer, AdsDatatypeId dataTypeId)
+        private object ParsePlcVariableToJs(byte[] dataBuffer, AdsDataTypeId dataTypeId)
         {
             return Types.types.Find(t => { return t.AdsDataType.Equals(dataTypeId); }).FromBuffer(dataBuffer);
         }
@@ -472,7 +473,7 @@ namespace ADS_DEMO
             else
             {
                 //adstypes
-                return (dataType.DataTypeId == AdsDatatypeId.ADST_STRING || dataType.DataTypeId == AdsDatatypeId.ADST_WSTRING) ? "\"" + ParsePlcVariableToJs(dataBuffer, dataType.DataTypeId) + "\"" : ParsePlcVariableToJs(dataBuffer, dataType.DataTypeId);
+                return (dataType.DataTypeId == AdsDataTypeId.ADST_STRING || dataType.DataTypeId == AdsDataTypeId.ADST_WSTRING) ? "\"" + ParsePlcVariableToJs(dataBuffer, dataType.DataTypeId) + "\"" : ParsePlcVariableToJs(dataBuffer, dataType.DataTypeId);
             }
         }
         #endregion
@@ -509,7 +510,7 @@ namespace ADS_DEMO
     public class AdsDataTypeDescription
     {
         public List<string> Names { get; set; }
-        public AdsDatatypeId AdsDataType { get; set; }
+        public AdsDataTypeId AdsDataType { get; set; }
         public int Size { get; set; }
         public Func<byte[], object> FromBuffer { get; set; }
     }
@@ -521,105 +522,105 @@ namespace ADS_DEMO
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "WSTRING" },
-                AdsDataType = AdsDatatypeId.ADST_WSTRING,
+                AdsDataType = AdsDataTypeId.ADST_WSTRING,
                 Size = 162, // 默认大小  
                 FromBuffer = buffer => DecodeWString(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "STRING" },
-                AdsDataType = AdsDatatypeId.ADST_STRING,
+                AdsDataType = AdsDataTypeId.ADST_STRING,
                 Size = 81, // 默认大小  
                 FromBuffer = buffer => DecodeString(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "BOOL", "BIT", "BIT8" },
-                AdsDataType = AdsDatatypeId.ADST_BIT,
+                AdsDataType = AdsDataTypeId.ADST_BIT,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeBIT(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "BYTE", "USINT", "BITARR8", "UINT8"},
-                AdsDataType = AdsDatatypeId.ADST_UINT8,
+                AdsDataType = AdsDataTypeId.ADST_UINT8,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeUINT8(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> {"SINT", "INT8" },
-                AdsDataType = AdsDatatypeId.ADST_INT8,
+                AdsDataType = AdsDataTypeId.ADST_INT8,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeINT8(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "UINT", "WORD", "BITARR16", "UINT16"},
-                AdsDataType = AdsDatatypeId.ADST_UINT16,
+                AdsDataType = AdsDataTypeId.ADST_UINT16,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeUINT16(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "DINT", "INT32"},
-                AdsDataType = AdsDatatypeId.ADST_INT32,
+                AdsDataType = AdsDataTypeId.ADST_INT32,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeINT32(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> {"UDINT", "DWORD", "TIME", "TIME_OF_DAY", "TOD", "BITARR32", "UINT32" },
-                AdsDataType = AdsDatatypeId.ADST_UINT32,
+                AdsDataType = AdsDataTypeId.ADST_UINT32,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeUINT32(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> {"DATE_AND_TIME", "DT", "DATE" },
-                AdsDataType = AdsDatatypeId.ADST_UINT32,
+                AdsDataType = AdsDataTypeId.ADST_UINT32,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeUINT32(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> {"LREAL", "DOUBLE" },
-                AdsDataType = AdsDatatypeId.ADST_REAL64,
+                AdsDataType = AdsDataTypeId.ADST_REAL64,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeREAL64(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "REAL", "FLOAT"},
-                AdsDataType = AdsDatatypeId.ADST_REAL32,
+                AdsDataType = AdsDataTypeId.ADST_REAL32,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeREAL32(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> {"LWORD", "ULINT", "LTIME", "UINT64" },
-                AdsDataType = AdsDatatypeId.ADST_UINT64,
+                AdsDataType = AdsDataTypeId.ADST_UINT64,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeUINT64(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "UINT64" },
-                AdsDataType = AdsDatatypeId.ADST_BIGTYPE,
+                AdsDataType = AdsDataTypeId.ADST_BIGTYPE,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeUINT64(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "LINT", "INT64"},
-                AdsDataType = AdsDatatypeId.ADST_INT64,
+                AdsDataType = AdsDataTypeId.ADST_INT64,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeINT64(buffer)
             },
             new AdsDataTypeDescription
             {
                 Names = new List<string> { "INT", "INT16"},
-                AdsDataType = AdsDatatypeId.ADST_INT16,
+                AdsDataType = AdsDataTypeId.ADST_INT16,
                 Size = 1, // 默认大小  
                 FromBuffer = buffer => DecodeINT16(buffer)
             },
